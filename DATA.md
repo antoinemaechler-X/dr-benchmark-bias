@@ -65,8 +65,14 @@ The 768-dimensional item embeddings are generated using
 (designed for Google Colab with GPU). These embed ~103K benchmark items
 and are used by `predict_missingness.py` to build item-level features.
 
-To regenerate, run `embed_items.ipynb` on Colab after placing `data/items.parquet`
-in the notebook's working directory.
+**Download pre-computed embeddings:**
+[Google Drive](https://drive.google.com/drive/folders/1QpXVTqALhEOWLRBqqW1u9Z9s8JW9SS93?usp=sharing)
+
+Download `item_embeddings.npy` and `item_embedding_meta.json` and place
+them in the project root directory.
+
+**To regenerate from scratch:** run `embed_items.ipynb` on Google Colab
+after placing `data/items.parquet` in the notebook's working directory.
 
 ## Full Pipeline Order
 
