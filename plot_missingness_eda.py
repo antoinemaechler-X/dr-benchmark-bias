@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.rcParams.update({'font.size': 10})
 
-BASE = '/Users/antoinemaechler/Documents/dr_benchmark_biased/cs321m_project'
+BASE = os.path.dirname(os.path.abspath(__file__))
 PROCESSED = os.path.join(BASE, 'processed')
 FIGURES = os.path.join(BASE, 'figures')
 os.makedirs(FIGURES, exist_ok=True)

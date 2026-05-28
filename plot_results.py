@@ -1,4 +1,13 @@
-"""Plot semi-synthetic DR results for mmlupro and matharena only."""
+"""Plot semi-synthetic DR results for mmlupro and matharena only.
+
+Reads semi_synthetic_results.csv and produces 2x2 grids (benchmark × masking mode)
+for each metric (bias, RMSE, rank correlation).
+
+Outputs:
+    figures/fig_dr_bias_focused.png
+    figures/fig_dr_rmse_focused.png
+    figures/fig_dr_rank_corr_focused.png
+"""
 
 import pandas as pd
 import matplotlib

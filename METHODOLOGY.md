@@ -243,11 +243,79 @@ These results demonstrate three key findings:
 
 ---
 
-## 6. Future Extensions
+## 6. Held-Out Model Prediction (Step 3) — COMPLETE
 
-### Held-Out Model Prediction
+We test whether the DR+IRT framework generalizes to predicting a **new model's** benchmark score from partial observations — the real-world use case.
 
-A natural real-world application: hold out an entire model (row) from the matrix, fit IRT+DR on the remaining models, then predict the held-out model's full-benchmark score from its partially observed items. This tests whether the DR+IRT framework improves over naive averaging for a genuinely new model entering the benchmark.
+### 6a. Setup
+
+For each benchmark (mmlupro, matharena), we randomly hold out 20% of models and train everything on the remaining 80%. Strict no-leakage protocol:
+
+1. **IRT**: Fit on training models' O_orig → item parameters β̂_k
+2. **Masking model**: Learned from training models' observation patterns
+3. **Propensity model**: Trained on training models' (O_orig, O_new) pairs
+4. **Held-out model**: Masking applied using the trained model (same α calibrated on training). Ability θ̂_m estimated via Newton-Raphson with fixed β̂_k from the held-out model's O_new observations.
+
+Same two masking modes and keep_rate sweep as Step 2. Same 4 estimators.
+
+### 6b. Estimators for Held-Out Model
+
+Given training-derived β̂_k and propensity π̂, and held-out model m's partial observations O_new_m:
+
+1. **Naive**: V̂(m) = mean(M[m, O_new_m = 1])
+2. **IRT**: Estimate θ̂_m via MLE with fixed β̂_k, then V̂(m) = mean(σ(θ̂_m − β̂_k)) over O_orig_m items
+3. **IPW**: V̂(m) = (1/n_orig) Σ_{O_orig} O_new/π̂ · M
+4. **DR**: V̂(m) = (1/n_orig) Σ_{O_orig} [σ(θ̂_m − β̂_k) + O_new/π̂ · (M − σ(θ̂_m − β̂_k))]
+
+θ̂_m estimation uses Newton-Raphson on the log-likelihood L(θ) = Σ_{j: O_new[m,j]=1} [y_j log σ(θ−β̂_j) + (1−y_j) log(1−σ(θ−β̂_j))], converging in ~10 iterations.
+
+### 6c. Key Results (keep_rate=0.7)
+
+**Features_only** (propensity correctly specified):
+
+| Benchmark | Naive bias | IRT bias | IPW bias | DR bias | DR RMSE | DR rank ρ |
+|-----------|-----------|----------|----------|---------|---------|-----------|
+| mmlupro | +0.014 | −0.001 | −0.001 | **−0.0002** | 0.002 | 1.000 |
+| matharena | −0.006 | −0.003 | +0.001 | **−0.003** | 0.019 | 0.983 |
+
+**Features_and_score** (propensity misspecified):
+
+| Benchmark | Naive bias | IRT bias | IPW bias | DR bias | IRT RMSE |
+|-----------|-----------|----------|----------|---------|----------|
+| mmlupro | +0.007 | **−0.007** | −0.007 | −0.007 | 0.009 |
+| matharena | +0.040 | **+0.029** | +0.039 | +0.031 | 0.040 |
+
+### 6d. Interpretation
+
+The held-out model results are consistent with Step 2: DR+IRT provides the best correction when the propensity model is correctly specified (features_only), while IRT alone dominates when missingness depends on the score. Critically, the framework **generalizes to unseen models** — item parameters learned from training models transfer well, and a new model's ability can be estimated from partial observations with fixed item parameters.
+
+---
+
+## 7. Real DR Correction (Step 4a) — COMPLETE
+
+We apply DR estimation to the actual observation matrices (no synthetic masking) to produce bias-corrected benchmark scores.
+
+### Setup
+
+For each benchmark, we fit:
+- **IRT** on O_orig → σ(θ̂_m − β̂_k) for all (model, item) pairs
+- **Propensity** P(O_orig[i,j]=1 | features) via logistic regression on all pairs
+
+Then compute per-model scores over **all K items** (not just observed):
+
+V̂_DR(m) = (1/K) Σ_k [R̂(m,k) + O(m,k)/π̂(m,k) · (M(m,k) − R̂(m,k))]
+
+For unobserved items (O=0), only the IRT prediction contributes. For observed items, the DR correction adjusts the IRT prediction toward the actual score, reweighted by inverse propensity.
+
+### Results
+
+- **mmlupro** (86% density): DR shifts scores downward by ~1% on average. Rank correlation between naive and DR is 0.999 — rankings are nearly unchanged. High observation rates leave little room for selection bias.
+
+- **matharena** (38% density): DR shifts scores downward by ~4% on average. Rank correlation drops to 0.640 — substantial ranking changes. Models with very low observation rates (3–14%) see the largest corrections, with some jumping 40+ ranks. This demonstrates that in sparse benchmarks, naive aggregation of observed scores can be highly misleading.
+
+---
+
+## 8. Future Extensions
 
 ### Sensitivity Analysis
 

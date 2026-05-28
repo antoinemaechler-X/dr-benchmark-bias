@@ -1,7 +1,10 @@
 #!/usr/bin/env python3.10
 """
 Build observation matrices and item statistics for all 16 benchmarks.
-Task 0c: Foundation for missingness analysis and DR estimation.
+
+Data loading follows the measurement-db schema from:
+  https://github.com/aims-foundation/measurement-db
+  (see data/DATA_FORMAT.md for the parquet schema specification)
 """
 import os
 import json

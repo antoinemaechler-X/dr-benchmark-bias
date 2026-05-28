@@ -1,5 +1,8 @@
 #!/usr/bin/env python3.10
-"""Collect model features from name parsing, LMArena, HuggingFace, and OpenRouter."""
+"""Collect model features from name parsing, LMArena, HuggingFace, and OpenRouter.
+
+Reads subjects.parquet from measurement-db (https://github.com/aims-foundation/measurement-db).
+"""
 
 import re
 import time
@@ -10,7 +13,8 @@ import numpy as np
 
 warnings.filterwarnings("ignore")
 
-SCRIPT_DIR = "/Users/antoinemaechler/Documents/dr_benchmark_biased/cs321m_project"
+from pathlib import Path
+SCRIPT_DIR = str(Path(__file__).resolve().parent)
 
 # ── Provider detection ──────────────────────────────────────────────────────
 
