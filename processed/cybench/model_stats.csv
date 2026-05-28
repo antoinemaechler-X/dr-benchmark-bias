@@ -1,0 +1,9 @@
+subject_id,display_name,model_mean,n_items_observed,model_obs_rate
+1706de75d75167ca,Llama 3 70b Chat,0.05,40,1.0
+674ebfc35037f00f,Claude 3.5 Sonnet,0.175,40,1.0
+898c0482aa82ec91,Claude 3 Opus,0.1,40,1.0
+908fa0fd3d718fc0,Gemini 1.5 Pro,0.075,40,1.0
+a2a69af70d1b9be7,gpt-4o,0.125,40,1.0
+acc690ce1eed6f84,Mixtral 8x22b Instruct,0.075,40,1.0
+db68274f0da37d09,Llama 3.1 405B Instruct,0.075,40,1.0
+e18504c83da54e6b,OpenAI o1-preview,0.1,40,1.0

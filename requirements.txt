@@ -1,0 +1,16 @@
+# Core dependencies
+pandas==2.2.2
+numpy==1.26.4
+scipy==1.15.3
+scikit-learn==1.4.2
+matplotlib==3.10.9
+pyarrow==24.0.0
+
+# Data collection (used by collect_model_features.py)
+requests==2.34.1
+datasets==4.8.5
+huggingface-hub==1.14.0
+
+# Embeddings (used by embed_items.ipynb, runs on Google Colab)
+# sentence-transformers>=2.2.0
+# torch>=1.10.0

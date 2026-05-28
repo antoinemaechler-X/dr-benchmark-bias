@@ -1,0 +1,4 @@
+subject_id,display_name,model_mean,n_items_observed,model_obs_rate
+162861aa30e55d79,AutoDevice,0.9482758620689655,116,1.0
+4b42d72d6f97a883,FinalRun,0.7672413793103449,116,1.0
+6fb7fd69baaecf19,DroidRun,0.9137931034482759,116,1.0

@@ -3,8 +3,9 @@ data/
 item_embeddings.npy
 item_embedding_meta.json
 
-# Processed intermediate data
-processed/
+# Processed intermediate data is INCLUDED in the repo for reproducibility.
+# Uncomment the line below to exclude it:
+# processed/
 
 # Python
 __pycache__/
