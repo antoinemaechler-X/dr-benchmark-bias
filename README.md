@@ -2,6 +2,8 @@
 
 CS 321M Final Project — Antoine Maechler & Skyler Wu
 
+**Repository:** https://github.com/antoinemaechler-X/dr-benchmark-bias
+
 ## Overview
 
 AI model evaluation relies on benchmarks, but the matrix of (model × item) scores
