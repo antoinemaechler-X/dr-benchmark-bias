@@ -24,15 +24,6 @@ __pycache__/
 .env
 *.egg-info/
 
-# Internal planning/notes (not part of deliverable)
-assignment.md
-manuscript_tips.md
-task_*.md
-PLAN.md
-STATUS.md
-pre-analysis.tex
-dr_notes.tex
-
 # LaTeX manuscript (compiled PDF already included)
 final_manuscript.tex
 references.bib
