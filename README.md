@@ -1,6 +1,6 @@
 # Doubly Robust Estimation for Correcting Selection Bias in AI Benchmark Evaluation
 
-CS 321M Final Project — Antoine Maechler & Skyler Wu
+CS 321M Final Project — Antoine Maechler
 
 **Repository:** https://github.com/antoinemaechler-X/dr-benchmark-bias
 
@@ -8,7 +8,7 @@ CS 321M Final Project — Antoine Maechler & Skyler Wu
 
 AI model evaluation relies on benchmarks, but the matrix of (model × item) scores
 is highly incomplete: not every model is tested on every item. This missingness is
-plausibly **non-random** (MNAR) — stronger or more prominent models tend to be evaluated
+plausibly **non-random** (MNAR): stronger or more prominent models tend to be evaluated
 more thoroughly. Naive aggregation of observed scores can therefore produce biased
 estimates of model capability.
 
@@ -22,9 +22,7 @@ using the [measurement-db](https://github.com/aims-foundation/measurement-db) da
 ├── README.md                        # This file
 ├── DATA.md                          # Data provenance and download instructions
 ├── METHODOLOGY.md                   # Detailed methodology writeup
-├── requirements.txt                 # Python dependencies (pinned versions)
-├── DR_Estimation_for_AI_Evaluation-2.pdf  # Paper
-│
+├── requirements.txt                 # Python dependencies (pinned versions)│
 ├── download_data.py                 # Step 1: Download raw data from HuggingFace
 ├── embed_items.ipynb                # Step 2: Generate item embeddings (Colab)
 ├── build_observation_matrices.py    # Step 3: Build observation/response matrices
@@ -44,7 +42,6 @@ using the [measurement-db](https://github.com/aims-foundation/measurement-db) da
 ├── held_out_results.csv             # Pre-computed held-out results (included)
 ├── missingness_prediction_results.csv
 ├── real_dr_results.csv
-├── step2_with_ci.csv
 └── held_out_scatter.csv
 ```
 
@@ -86,19 +83,19 @@ Google Drive:
 2. **Run the analysis pipeline:**
 
 ```bash
-# Step 5: Missingness prediction (~80s)
+# Step 5: Missingness prediction
 python predict_missingness.py
 
-# Step 6: Semi-synthetic DR experiments (~5min)
+# Step 6: Semi-synthetic DR experiments
 python semi_synthetic_dr.py
 
-# Step 7: Held-out model evaluation (~5min)
+# Step 7: Held-out model evaluation
 python held_out_model.py
 
-# Step 8: Additional analyses — real DR correction, bootstrap CIs (~3min)
+# Step 8: Additional analyses — real DR correction
 python additional_analyses.py
 
-# Step 9-10: Generate all figures (<30s)
+# Step 9-10: Generate all figures
 python plot_results.py
 python plot_missingness_eda.py
 ```
@@ -113,9 +110,9 @@ gated `aims-foundation/torch-measure-data` HuggingFace dataset.
 
 ```bash
 python download_data.py                 # Download raw parquet files
-# Run embed_items.ipynb on Google Colab  # Generate embeddings (~15min on T4 GPU)
-python build_observation_matrices.py    # Build processed matrices (~30s)
-python collect_model_features.py        # Collect model metadata (~2min, needs internet)
+# Run embed_items.ipynb on Google Colab  # Generate embeddings
+python build_observation_matrices.py    # Build processed matrices
+python collect_model_features.py        # Collect model metadata (needs internet)
 # Then run Steps 5-10 above
 ```
 
@@ -126,23 +123,9 @@ python collect_model_features.py        # Collect model metadata (~2min, needs i
 | `predict_missingness.py` | `missingness_prediction_results.csv` | Table 1 (Missingness AUCs) |
 | `semi_synthetic_dr.py` | `semi_synthetic_results.csv`, `figures/fig_dr_{bias,rmse,rank_corr}*.png` | Figures 3–5 (DR correction results) |
 | `held_out_model.py` | `held_out_results.csv`, `figures/fig_held_out_*.png` | Figures 6–8 (Held-out evaluation) |
-| `additional_analyses.py` | `real_dr_results.csv`, `step2_with_ci.csv`, `held_out_scatter.csv`, `figures/fig_real_dr_*.png`, `figures/fig_dr_bias_ci.png`, `figures/fig_held_out_scatter.png` | Figure 9 (Real DR), supplementary |
+| `additional_analyses.py` | `real_dr_results.csv`, `held_out_scatter.csv`, `figures/fig_real_dr_*.png`, `figures/fig_dr_bias_ci.png`, `figures/fig_held_out_scatter.png` | Figure 9 (Real DR), supplementary |
 | `plot_results.py` | `figures/fig_dr_{bias,rmse,rank_corr}_focused.png` | Figures 3–5 (focused 2-benchmark view) |
 | `plot_missingness_eda.py` | `figures/fig_density_overview.png`, `fig_heatmaps.png`, `fig_mnar_evidence.png`, `fig_model_strength_coverage.png`, `fig_livecodebench_temporal.png`, `fig_missingness_summary_table.png` | Figures 1–2 (EDA) |
-
-## Runtime Estimates
-
-All timings on Apple M1 Pro (no GPU required for analysis scripts):
-
-| Script | Runtime |
-|---|---|
-| `predict_missingness.py` | ~80s |
-| `semi_synthetic_dr.py` | ~5 min |
-| `held_out_model.py` | ~5 min |
-| `additional_analyses.py` | ~3 min |
-| `plot_results.py` | <5s |
-| `plot_missingness_eda.py` | <10s |
-| **Total** | **~15 min** |
 
 ## Random Seeds
 
