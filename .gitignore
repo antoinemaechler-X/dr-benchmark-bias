@@ -1,0 +1,33 @@
+# Data (too large for Git — see README for download instructions)
+data/
+item_embeddings.npy
+item_embedding_meta.json
+
+# Processed intermediate data
+processed/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+*.egg-info/
+
+# Internal planning/notes (not part of deliverable)
+assignment.md
+manuscript_tips.md
+task_*.md
+PLAN.md
+STATUS.md
+pre-analysis.tex
+dr_notes.tex
