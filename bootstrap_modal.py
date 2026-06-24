@@ -1,0 +1,130 @@
+"""
+Bootstrap the semi-synthetic DR experiment on Modal.
+
+Each container loads a precomputed bundle (see bootstrap_prepare.py) and runs a
+chunk of bootstrap seeds. For every seed we draw a fresh random masking O_new,
+refit IRT, refit the propensity model, and compute the four estimators
+(Naive / IRT / IPW / DR+IRT) at every keep-rate. This isolates the masking
+noise, giving a distribution (mean +/- CI) for each estimate instead of the
+single draw the current figure uses.
+
+Run:
+    modal run bootstrap_modal.py --iters 1000
+
+Outputs (written locally by the entrypoint):
+    bootstrap_results.csv     one row per (bid, mode, keep_rate, seed): aggregate
+                              bias / rmse / rank-corr for each estimator
+    bootstrap_permodel.npz    per-model estimates stacked over seeds, for the
+                              model-by-model analysis
+"""
+
+import modal
+
+app = modal.App("dr-bootstrap")
+
+image = (
+    modal.Image.debian_slim(python_version="3.10")
+    .pip_install("numpy==1.26.4", "scipy==1.13.1", "scikit-learn==1.5.1",
+                 "pandas==2.2.2", "matplotlib==3.9.0")
+    .add_local_file("semi_synthetic_dr.py", "/root/semi_synthetic_dr.py")
+    .add_local_dir("bootstrap_bundles", "/root/bootstrap_bundles")
+)
+
+KEEP_RATES = [0.5, 0.6, 0.7, 0.8, 0.9]
+MODES = ["features_only", "features_and_score"]
+BENCHMARKS = ["mmlupro", "matharena"]
+
+
+@app.function(image=image, timeout=3600, cpu=1.0, retries=2)
+def run_chunk(task):
+    import sys
+    import numpy as np
+    sys.path.insert(0, "/root")
+    import semi_synthetic_dr as S
+
+    bid, mode, seeds = task["bid"], task["mode"], task["seeds"]
+    b = np.load(f"/root/bootstrap_bundles/{bid}.npz", allow_pickle=True)
+    O_orig = b["O_orig"].astype(np.int8)
+    M = b["M"].astype(np.float32)
+    X_model = b["X_model"]
+    X_item = b["X_item"]
+    mu_true = b["mu_true"]
+    z = b["z_fo"] if mode == "features_only" else b["z_fs"]
+    n_models, n_items = O_orig.shape
+
+    out = []
+    for seed in seeds:
+        for kr in KEEP_RATES:
+            rng = np.random.RandomState(int(seed) * 1000 + int(round(kr * 100)))
+            O_new, actual = S.generate_masking(z, O_orig, kr, rng)
+            M_irt = S.fit_irt(M, O_new)
+            pi = S.fit_propensity(X_model, X_item, O_orig, O_new, n_models, n_items)
+
+            mus = {
+                "naive": S.estimator_naive(M, O_new, O_orig),
+                "irt":   S.estimator_irt(M_irt, O_orig),
+                "ipw":   S.estimator_ipw(M, O_new, O_orig, pi),
+                "dr":    S.estimator_dr(M, M_irt, O_new, O_orig, pi),
+            }
+            rec = {"bid": bid, "mode": mode, "keep_rate": kr,
+                   "seed": int(seed), "actual_keep_rate": float(actual)}
+            for name, mu in mus.items():
+                bias, rmse, rc = S.evaluate(mu, mu_true)
+                rec[f"{name}_bias"] = bias
+                rec[f"{name}_rmse"] = rmse
+                rec[f"{name}_rankcorr"] = rc
+                rec[f"{name}_mu"] = mu.astype(np.float32)
+            rec["mu_true"] = mu_true.astype(np.float32)
+            out.append(rec)
+    return out
+
+
+@app.local_entrypoint()
+def main(iters: int = 1000, chunk_mmlupro: int = 5, chunk_matharena: int = 50):
+    import numpy as np
+    import pandas as pd
+
+    chunk_sizes = {"mmlupro": chunk_mmlupro, "matharena": chunk_matharena}
+    tasks = []
+    for bid in BENCHMARKS:
+        cs = chunk_sizes[bid]
+        for mode in MODES:
+            for start in range(0, iters, cs):
+                seeds = list(range(start, min(start + cs, iters)))
+                tasks.append({"bid": bid, "mode": mode, "seeds": seeds})
+    print(f"Dispatching {len(tasks)} chunks for {iters} iterations...")
+
+    all_recs = []
+    for res in run_chunk.map(tasks):
+        all_recs.extend(res)
+    print(f"Collected {len(all_recs)} records.")
+
+    agg_cols = ["bid", "mode", "keep_rate", "seed", "actual_keep_rate"]
+    metric_cols = [f"{n}_{m}" for n in ["naive", "irt", "ipw", "dr"]
+                   for m in ["bias", "rmse", "rankcorr"]]
+    agg_rows = []
+    permodel = {}  # key -> {estimator -> list of mu arrays}, plus mu_true & seeds
+    for r in all_recs:
+        agg_rows.append({**{c: r[c] for c in agg_cols},
+                         **{c: r[c] for c in metric_cols}})
+        key = f"{r['bid']}|{r['mode']}|{r['keep_rate']}"
+        d = permodel.setdefault(key, {"seed": [], "mu_true": r["mu_true"],
+                                      "naive": [], "irt": [], "ipw": [], "dr": []})
+        d["seed"].append(r["seed"])
+        for name in ["naive", "irt", "ipw", "dr"]:
+            d[name].append(r[f"{name}_mu"])
+
+    df = pd.DataFrame(agg_rows).sort_values(["bid", "mode", "keep_rate", "seed"])
+    df.to_csv("bootstrap_results.csv", index=False)
+    print(f"Saved bootstrap_results.csv ({len(df)} rows)")
+
+    npz = {}
+    for key, d in permodel.items():
+        order = np.argsort(d["seed"])
+        safe = key.replace("|", "__")
+        npz[f"{safe}__seed"] = np.array(d["seed"])[order]
+        npz[f"{safe}__mu_true"] = d["mu_true"]
+        for name in ["naive", "irt", "ipw", "dr"]:
+            npz[f"{safe}__{name}"] = np.stack(d[name])[order]  # (n_seeds, n_models)
+    np.savez_compressed("bootstrap_permodel.npz", **npz)
+    print(f"Saved bootstrap_permodel.npz ({len(permodel)} keys)")
